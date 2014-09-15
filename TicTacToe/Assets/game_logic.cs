@@ -3,7 +3,7 @@ using System.Collections;
 using System.IO;
 using System.Collections.Generic;
 
-public enum TypeOfAI {Random, Algorithmed1}
+public enum TypeOfAI {Random, Algorithmed1, Learning1}
 
 public class game_logic : MonoBehaviour {
 
@@ -18,7 +18,7 @@ public class game_logic : MonoBehaviour {
 	AI AISystem;
 	private int FreeTiles;
 	public bool isAIfirst = false;
-
+	public bool AIClean = false;
 
 
 
@@ -29,17 +29,20 @@ public class game_logic : MonoBehaviour {
 		turnAI = isAIfirst;
 		TicTacToeBoard = new string[Board_Size_X, Board_Size_Y];
 		GenerateNewBoard ();
-		AISystem = new AI(AIType, TicTacToeBoard, Board_Size_X, Board_Size_Y, WIN_LENGTH);
+		if (AIType == TypeOfAI.Algorithmed1) AISystem = new AI_Algorythmed(TicTacToeBoard, WIN_LENGTH, AIClean);
+		else if (AIType == TypeOfAI.Learning1) AISystem = new AI_SimpleWeight(TicTacToeBoard, WIN_LENGTH, AIClean);
+		else if (AIType == TypeOfAI.Random) AISystem = new AI_Random(TicTacToeBoard, WIN_LENGTH, AIClean);
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if (FreeTiles <= 0) 
 		{
+			AISystem.FinishAI(-1);
 			Debug.Log("DRAW");
 			GenerateNewBoard ();
 		}
-		if (turnAI&&FreeTiles>0) MoveAI ();
+		if (turnAI && FreeTiles > 0) MoveAI ();
 	}
 
 
@@ -47,7 +50,10 @@ public class game_logic : MonoBehaviour {
 		//Draw buttons and catch clicks
 		SizeButtonsToScreen ();
 		if (GUI.Button (new Rect (SCR_WIDTH / 2 - BUTTON_SIZE * 3 / 2, 0, BUTTON_SIZE * 3, BUTTON_SIZE), "New Game")) 
+						{
+						AISystem.FinishAI(0);
 						GenerateNewBoard ();
+						}
 		for (int i = 0; i < Board_Size_X; i++)
 		for (int j = 0; j < Board_Size_Y; j++) {
 			if(GUI.Button (new Rect (SCR_WIDTH/2 - BUTTON_SIZE*Board_Size_X/2 + i*BUTTON_SIZE, BUTTON_SIZE*(j+1), 
@@ -57,6 +63,7 @@ public class game_logic : MonoBehaviour {
 				TicTacToeBoard [i, j] = "X";
 				if (CheckWin(i,j)) 
 				{
+					AISystem.FinishAI(-1);
 					Debug.Log("PLAYER WON");
 					GenerateNewBoard ();
 				}
@@ -85,13 +92,13 @@ public class game_logic : MonoBehaviour {
 	private void MoveAI()
 	{
 		int[] move_tile;
-		if (AISystem.AIType == TypeOfAI.Algorithmed1) move_tile = AISystem.MoveAlgorythmed1();
-		else move_tile = AISystem.MoveRandom();	
+		move_tile = AISystem.Move();
 		if (move_tile [0] < 0) {Debug.Log("game_logic: ERROR with AI"); return;}
 		TicTacToeBoard[(int)move_tile[0], (int)move_tile[1]] = "O";
 		turnAI = false;
 		if (CheckWin ((int)move_tile[0], (int)move_tile[1]))
 		{
+			AISystem.FinishAI(1);
 			Debug.Log("COMPUTER WON");
 			GenerateNewBoard();
 		}
