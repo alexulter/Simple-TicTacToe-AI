@@ -3,8 +3,6 @@ using System.Collections;
 using System.IO;
 using System.Collections.Generic;
 
-public enum TypeOfAI {Random, Algorithmed1, Learning1}
-
 public class game_logic : MonoBehaviour {
 
 	private static float SCR_HEIGHT = Screen.height, SCR_WIDTH = Screen.width;
@@ -12,37 +10,52 @@ public class game_logic : MonoBehaviour {
 	private int Board_Size_X, Board_Size_Y, WIN_LENGTH;
 	private static float BUTTON_SIZE = 50;
 	private string[,] TicTacToeBoard;
-	private bool turnAI = false;
 	public bool isOnTorus = false;
-	public TypeOfAI AIType;
-	AI AISystem;
+	
 	private int FreeTiles;
 	public bool isAIfirst = false;
 	public bool AIClean = false;
-
+	private Player CurrentPlayer;
+	private Player player1;
+	private Player player2;
+	public PlayerType Player1type;
+	public PlayerType Player2type;
+	
 
 
 	// Use this for initialization
 	void Start () 
 	{
 		Board_Size_X = SetBoard_Size_X; Board_Size_Y = SetBoard_Size_Y; WIN_LENGTH = SetWIN_LENGTH;
-		turnAI = isAIfirst;
+		//turnAI = isAIfirst;
 		TicTacToeBoard = new string[Board_Size_X, Board_Size_Y];
+		MakePlayers();
 		GenerateNewBoard ();
-		if (AIType == TypeOfAI.Algorithmed1) AISystem = new AI_Algorythmed(TicTacToeBoard, WIN_LENGTH, AIClean);
-		else if (AIType == TypeOfAI.Learning1) AISystem = new AI_SimpleWeight(TicTacToeBoard, WIN_LENGTH, AIClean);
-		else if (AIType == TypeOfAI.Random) AISystem = new AI_Random(TicTacToeBoard, WIN_LENGTH, AIClean);
+		CurrentPlayer = player1;
+		Debug.Log(CurrentPlayer.Symbol);
+	}
+	
+	void MakePlayers()
+	{
+		GameObject go1 = new GameObject("Player1");
+		GameObject go2 = new GameObject("Player2");
+		player1 = go1.AddComponent<Player>();
+		player2 = go2.AddComponent<Player>();
+		player1.type = Player1type;
+		player2.type = Player2type;
+		player1.Symbol = "X";
+		player2.Symbol = "O";
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if (FreeTiles <= 0) 
 		{
-			AISystem.FinishAI(-1);
+			//AISystem.FinishAI(-1);
 			Debug.Log("DRAW");
 			GenerateNewBoard ();
 		}
-		if (turnAI && FreeTiles > 0) MoveAI ();
+		//if (turnAI && FreeTiles > 0) MoveAI ();
 	}
 
 
@@ -51,36 +64,51 @@ public class game_logic : MonoBehaviour {
 		SizeButtonsToScreen ();
 		if (GUI.Button (new Rect (SCR_WIDTH / 2 - BUTTON_SIZE * 3 / 2, 0, BUTTON_SIZE * 3, BUTTON_SIZE), "New Game")) 
 						{
-						AISystem.FinishAI(0);
+						//AISystem.FinishAI(0);
 						GenerateNewBoard ();
 						}
 		for (int i = 0; i < Board_Size_X; i++)
 		for (int j = 0; j < Board_Size_Y; j++) {
-			if(GUI.Button (new Rect (SCR_WIDTH/2 - BUTTON_SIZE*Board_Size_X/2 + i*BUTTON_SIZE, BUTTON_SIZE*(j+1), 
-			                         BUTTON_SIZE, BUTTON_SIZE), TicTacToeBoard [i, j]) && !turnAI 
-			   && TicTacToeBoard [i, j] == " ")
-			{
-				TicTacToeBoard [i, j] = "X";
-				if (CheckWin(i,j)) 
-				{
-					AISystem.FinishAI(-1);
-					Debug.Log("PLAYER WON");
-					GenerateNewBoard ();
-				}
-				else turnAI = true;
-				FreeTiles--;
-			}
+			if (GUI.Button (new Rect (SCR_WIDTH/2 - BUTTON_SIZE*Board_Size_X/2 + i*BUTTON_SIZE, BUTTON_SIZE*(j+1), 
+				BUTTON_SIZE, BUTTON_SIZE), TicTacToeBoard [i, j])) 
+			    	OnPressTile(i,j);
 		}
 
 	}
-
+	
+	void OnPressTile (int i, int j)
+	{
+		if (CurrentPlayer.isHuman && TicTacToeBoard [i, j] == " ")
+		{
+			TicTacToeBoard [i, j] = CurrentPlayer.Symbol;
+			if (CheckWin(i,j)) 
+			{
+				//AISystem.FinishAI(-1);
+				if (CurrentPlayer == player1) Debug.Log("PLAYER 1 WON");
+				else Debug.Log("PLAYER 2 WON");
+				GenerateNewBoard ();
+			}
+			else NextPlayer();
+			FreeTiles--;
+		}
+	}
+	
+	void NextPlayer()
+	{
+		if (CurrentPlayer == player1) CurrentPlayer = player2;
+		else if (CurrentPlayer == player2) CurrentPlayer = player1;
+		else Debug.LogError("Error: Current player has wrong instance");
+	}
+	
 	private void GenerateNewBoard()
 	{
-		turnAI = isAIfirst;
+		if (TicTacToeBoard == null) TicTacToeBoard = new string[Board_Size_X, Board_Size_Y];
+		//turnAI = isAIfirst;
 		for (int i = 0; i < Board_Size_X; i++)
 			for (int j = 0; j < Board_Size_Y; j++)
 				TicTacToeBoard [i, j] = " ";
 		FreeTiles = Board_Size_X * Board_Size_Y;
+		CurrentPlayer = player1;
 	}
 
 	private void SizeButtonsToScreen()
@@ -89,23 +117,7 @@ public class game_logic : MonoBehaviour {
 		SCR_WIDTH = Screen.width;
 		BUTTON_SIZE = Mathf.Min (SCR_WIDTH / Board_Size_X, SCR_HEIGHT / (Board_Size_Y+1));
 	}
-	private void MoveAI()
-	{
-		int[] move_tile;
-		move_tile = AISystem.Move();
-		if (move_tile [0] < 0) {Debug.Log("game_logic: ERROR with AI"); return;}
-		TicTacToeBoard[(int)move_tile[0], (int)move_tile[1]] = "O";
-		turnAI = false;
-		if (CheckWin ((int)move_tile[0], (int)move_tile[1]))
-		{
-			AISystem.FinishAI(1);
-			Debug.Log("COMPUTER WON");
-			GenerateNewBoard();
-		}
-		FreeTiles--;
 
-				
-	}
 
 	private bool CheckWin (int I, int J)
 	{

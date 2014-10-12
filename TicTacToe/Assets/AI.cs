@@ -8,7 +8,6 @@ public class AI
 	protected int Board_Size_X, Board_Size_Y;
 	protected int WIN_LENGTH;
 	protected string[,] TicTacToeBoard;
-	public TypeOfAI AIType;
 	
 	protected SavedData data;
 

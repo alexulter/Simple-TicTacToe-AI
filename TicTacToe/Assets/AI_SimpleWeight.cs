@@ -12,16 +12,8 @@ public class AI_SimpleWeight : AI {
 	
 	override public int[] Move()
 	{
-		ArrayList empty_tiles = new ArrayList ();
-		for (int i = 0; i < Board_Size_X; i++)
-			for (int j = 0; j < Board_Size_Y; j++)
-			if (TicTacToeBoard[i,j] == " ") {
-				if (isWin(TicTacToeBoard, i,j))
-				{
-					return new int[]{i, j};
-				}
-				empty_tiles.Add(new int[]{data.GetUtility (ConvertBoard2Line (afterMove(i,j))),i,j});
-			}
+		
+		ArrayList empty_tiles = FindEmptyTiles();
 		if (empty_tiles.Count <= 0) {Debug.LogError("AI: ERROR"); return new int[]{-1,-1};}
 		int I = -1,J = -1;
 		int maxmax = -1;
@@ -32,12 +24,27 @@ public class AI_SimpleWeight : AI {
 			I = entry[1];
 			J = entry[2];
 		}
-		moveSequence.Add (ConvertBoard2Line(afterMove(I,J)));
+		moveSequence.Add (ConvertBoard2Line(GetStateAfterMove(I,J)));
 		return new int[]{I, J};
 	}
 	
+	ArrayList FindEmptyTiles()
+	{
+		ArrayList empty_tiles = new ArrayList();
+		for (int i = 0; i < Board_Size_X; i++)
+			for (int j = 0; j < Board_Size_Y; j++)
+			if (TicTacToeBoard[i,j] == " ") {
+				if (isWin(TicTacToeBoard, i,j))
+				{
+					//return new int[]{i, j};
+				}
+				empty_tiles.Add(new int[]{data.GetUtility (ConvertBoard2Line (GetStateAfterMove(i,j))),i,j});
+			}
+		return empty_tiles;
+	}
+	
 	//Add "0" to empty tile {I,J}
-	private string[,] afterMove(int I, int J)
+	private string[,] GetStateAfterMove(int I, int J)
 	{
 						if (TicTacToeBoard[I,J] != " ") Debug.LogError("Error: target tile was not empty");
 						string[,] _VirtualBoard = new string[TicTacToeBoard.GetLength(0), 
