@@ -6,7 +6,9 @@ public class Player : MonoBehaviour {
 	public string Symbol = "?";
 	AI AISystem;
 	public PlayerType type;
-	public bool isHuman;
+	public string[,] Board;
+	public int WinLength;
+	public bool AIClean;
 	
 	void Awake()
 	{
@@ -14,27 +16,33 @@ public class Player : MonoBehaviour {
 	}
 	void Start()
 	{
-		isHuman = true;
-//		if (type == PlayerType.AIAlgorythm) AISystem = new AI_Algorythmed(TicTacToeBoard, WIN_LENGTH, AIClean);
-//		else if (type == PlayerType.AIWeights) AISystem = new AI_SimpleWeight(TicTacToeBoard, WIN_LENGTH, AIClean);
-//		else if (type == PlayerType.AIRandom) AISystem = new AI_Random(TicTacToeBoard, WIN_LENGTH, AIClean);
+		GenerateAI();
 	}
 	
-//	private void MoveAI()
-//	{
-//		int[] move_tile;
-//		move_tile = AISystem.Move();
-//		//if (move_tile [0] < 0) {Debug.Log("game_logic: ERROR with AI"); return;}
-//		TicTacToeBoard[(int)move_tile[0], (int)move_tile[1]] = "O";
-//		turnAI = false;
-//		if (CheckWin ((int)move_tile[0], (int)move_tile[1]))
-//		{
-//			AISystem.FinishAI(1);
-//			Debug.Log("COMPUTER WON");
-//			GenerateNewBoard();
-//		}
-//		FreeTiles--;
-//		
-//		
-//	}
+	public void GenerateAI()
+	{
+		if (type == PlayerType.AIAlgorythm) AISystem = new AI_Algorythmed(Board, WinLength, AIClean);
+		else if (type == PlayerType.AIWeights) 
+		{
+		AISystem = new AI_SimpleWeight(Board, WinLength, AIClean);
+		((AI_SimpleWeight)AISystem).MYMARK = Symbol;
+		}
+		else if (type == PlayerType.AIRandom) AISystem = new AI_Random(Board, WinLength, AIClean);
+	}
+	
+	public bool isHuman()
+	{
+		if (type == PlayerType.Human) return true;
+		else return false;
+	}
+	
+	public int[] MoveAI()
+	{
+		return AISystem.Move();
+	}
+	public void FinishAI(int i)
+	{
+		if (type == PlayerType.AIWeights) AISystem.FinishAI(i);
+	}
+
 }

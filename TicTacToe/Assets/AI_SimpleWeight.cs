@@ -4,11 +4,11 @@ using System.Collections;
 public class AI_SimpleWeight : AI {
 
 	private ArrayList moveSequence = new ArrayList();
+	public string MYMARK;
 	
 	public AI_SimpleWeight (string[,]board, int length, bool clean) : base(board, length, clean)
 	{}
 	
-
 	
 	override public int[] Move()
 	{
@@ -16,7 +16,7 @@ public class AI_SimpleWeight : AI {
 		ArrayList empty_tiles = FindEmptyTiles();
 		if (empty_tiles.Count <= 0) {Debug.LogError("AI: ERROR"); return new int[]{-1,-1};}
 		int I = -1,J = -1;
-		int maxmax = -1;
+		int maxmax = -100500;
 		foreach (int[] entry in empty_tiles)
 			if (entry[0] > maxmax||(entry[0] == maxmax && Random.Range(0,100)>50)) 
 		{
@@ -36,6 +36,9 @@ public class AI_SimpleWeight : AI {
 			if (TicTacToeBoard[i,j] == " ") {
 				if (isWin(TicTacToeBoard, i,j))
 				{
+					empty_tiles.Clear();
+					empty_tiles.Add(new int[]{data.GetUtility (ConvertBoard2Line (GetStateAfterMove(i,j))),i,j});
+					return empty_tiles;
 					//return new int[]{i, j};
 				}
 				empty_tiles.Add(new int[]{data.GetUtility (ConvertBoard2Line (GetStateAfterMove(i,j))),i,j});
@@ -46,13 +49,14 @@ public class AI_SimpleWeight : AI {
 	//Add "0" to empty tile {I,J}
 	private string[,] GetStateAfterMove(int I, int J)
 	{
+						//Debug.Log(I.ToString()+" "+J.ToString());
 						if (TicTacToeBoard[I,J] != " ") Debug.LogError("Error: target tile was not empty");
 						string[,] _VirtualBoard = new string[TicTacToeBoard.GetLength(0), 
 							TicTacToeBoard.GetLength(1)];
 						for (int i = 0; i < TicTacToeBoard.GetLength(0); i++)
 							for (int j = 0; j < TicTacToeBoard.GetLength(1); j++)
 								_VirtualBoard [i, j] = TicTacToeBoard [i,j];
-						_VirtualBoard [I, J] = "O";
+						_VirtualBoard [I, J] = MYMARK;
 						return _VirtualBoard;
 	}
 	

@@ -20,6 +20,7 @@ public class game_logic : MonoBehaviour {
 	private Player player2;
 	public PlayerType Player1type;
 	public PlayerType Player2type;
+	private bool isGeneratingNewBoard = false;
 	
 
 
@@ -32,11 +33,12 @@ public class game_logic : MonoBehaviour {
 		MakePlayers();
 		GenerateNewBoard ();
 		CurrentPlayer = player1;
-		Debug.Log(CurrentPlayer.Symbol);
 	}
 	
 	void MakePlayers()
 	{
+		if (player1 != null) Destroy(player1.gameObject);
+		if (player2 != null) Destroy(player2.gameObject);
 		GameObject go1 = new GameObject("Player1");
 		GameObject go2 = new GameObject("Player2");
 		player1 = go1.AddComponent<Player>();
@@ -45,17 +47,24 @@ public class game_logic : MonoBehaviour {
 		player2.type = Player2type;
 		player1.Symbol = "X";
 		player2.Symbol = "O";
+		player1.Board = TicTacToeBoard;
+		player2.Board = TicTacToeBoard;
+		player1.WinLength = WIN_LENGTH;
+		player2.WinLength = WIN_LENGTH;
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if (FreeTiles <= 0) 
 		{
-			//AISystem.FinishAI(-1);
+			player1.FinishAI(0);
+			player2.FinishAI(0);
+//			player1.FinishAI(-1);
+//			player2.FinishAI(-1);
 			Debug.Log("DRAW");
 			GenerateNewBoard ();
 		}
-		//if (turnAI && FreeTiles > 0) MoveAI ();
+		else if (!isGeneratingNewBoard && !CurrentPlayer.isHuman() && FreeTiles > 0) MoveAI ();
 	}
 
 
@@ -64,7 +73,8 @@ public class game_logic : MonoBehaviour {
 		SizeButtonsToScreen ();
 		if (GUI.Button (new Rect (SCR_WIDTH / 2 - BUTTON_SIZE * 3 / 2, 0, BUTTON_SIZE * 3, BUTTON_SIZE), "New Game")) 
 						{
-						//AISystem.FinishAI(0);
+						player1.FinishAI(0);
+						player2.FinishAI(0);
 						GenerateNewBoard ();
 						}
 		for (int i = 0; i < Board_Size_X; i++)
@@ -78,19 +88,40 @@ public class game_logic : MonoBehaviour {
 	
 	void OnPressTile (int i, int j)
 	{
-		if (CurrentPlayer.isHuman && TicTacToeBoard [i, j] == " ")
+		if (CurrentPlayer.isHuman() && TicTacToeBoard [i, j] == " ")
 		{
 			TicTacToeBoard [i, j] = CurrentPlayer.Symbol;
 			if (CheckWin(i,j)) 
 			{
-				//AISystem.FinishAI(-1);
+				player1.FinishAI(-1);
+				player2.FinishAI(-1);
 				if (CurrentPlayer == player1) Debug.Log("PLAYER 1 WON");
 				else Debug.Log("PLAYER 2 WON");
 				GenerateNewBoard ();
 			}
-			else NextPlayer();
-			FreeTiles--;
+			else 
+			{
+				NextPlayer();
+				FreeTiles--;
+			}
+			
 		}
+	}
+	
+	private void MoveAI()
+	{
+		int[] move_tile;
+		move_tile = CurrentPlayer.MoveAI();
+		//if (move_tile [0] < 0) {Debug.Log("game_logic: ERROR with AI"); return;}
+		TicTacToeBoard[(int)move_tile[0], (int)move_tile[1]] = CurrentPlayer.Symbol;
+		if (CheckWin ((int)move_tile[0], (int)move_tile[1]))
+		{
+			CurrentPlayer.FinishAI(1);
+			Debug.Log("COMPUTER WON ("+CurrentPlayer.ToString()+")");
+			GenerateNewBoard();
+		}
+		else NextPlayer();
+		FreeTiles--;
 	}
 	
 	void NextPlayer()
@@ -102,6 +133,8 @@ public class game_logic : MonoBehaviour {
 	
 	private void GenerateNewBoard()
 	{
+		isGeneratingNewBoard = true;
+		//MakePlayers();
 		if (TicTacToeBoard == null) TicTacToeBoard = new string[Board_Size_X, Board_Size_Y];
 		//turnAI = isAIfirst;
 		for (int i = 0; i < Board_Size_X; i++)
@@ -109,6 +142,12 @@ public class game_logic : MonoBehaviour {
 				TicTacToeBoard [i, j] = " ";
 		FreeTiles = Board_Size_X * Board_Size_Y;
 		CurrentPlayer = player1;
+		//Give new board to AI
+		player1.Board = TicTacToeBoard;
+		player2.Board = TicTacToeBoard;
+		player1.GenerateAI();
+		player2.GenerateAI();
+		isGeneratingNewBoard = false;
 	}
 
 	private void SizeButtonsToScreen()
@@ -163,14 +202,14 @@ public class game_logic : MonoBehaviour {
 						return false;
 	}
 
-	public string TicTacToe_board2line(string[,] board, int Xmax, int Ymax)
-	{
-		string line = "";
-		for (int i = 0; i < Xmax; i++)
-		for (int j = 0; j < Ymax; j++) {
-			line += board [i, j];
-		}
-		return line;
-	}
+//	public string TicTacToe_board2line(string[,] board, int Xmax, int Ymax)
+//	{
+//		string line = "";
+//		for (int i = 0; i < Xmax; i++)
+//		for (int j = 0; j < Ymax; j++) {
+//			line += board [i, j];
+//		}
+//		return line;
+//	}
 
 }
